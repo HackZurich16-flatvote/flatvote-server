@@ -60,9 +60,9 @@ class NotificationService {
             }
 
             return Promise.all(completed).then(() => {
-                // snapshot.update({
-                //    notified: true
-                //});
+                snapshot.update({
+                    notified: true
+                });
             });
         });
     }
