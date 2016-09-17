@@ -22,8 +22,8 @@ class NotificationService {
     sendNotifications(snapshot) {
         const vote = snapshot.val();
 
-        const numberOfVotes = (vote.yes || []).length + (vote.no || []).length;
-        if (numberOfVotes >= vote.votesRequired) {
+        const numberOfVotes = _.values(vote.yes).length + _.values(vote.no).length;
+        if (vote.votesRequired && numberOfVotes >= vote.votesRequired) {
             return;
         }
 
@@ -41,12 +41,13 @@ class NotificationService {
             return;
         }
 
-        if (!vote.yes || vote.yes.length === 0) {
+        if (_.values(vote.yes).length === 0) {
             // was a no vote of a user, just for training
             return;
         }
 
-        const friendIdRefs = db.ref(`friends/${vote.yes[0]}`).once("value");
+        const responders = _.values(vote.yes).concat(_.values(vote.no));
+        const friendIdRefs = db.ref(`friends/${responders[0]}`).once("value");
         const friends = friendIdRefs.then(idsRef => {
             const ids = idsRef.val() ? idsRef.val() : [];
 
@@ -56,7 +57,6 @@ class NotificationService {
                 });
             }
 
-            const responders = (vote.yes || []).concat((vote.no || []));
             const pendingIds = _.without(ids, responders);
             return Promise.all(pendingIds.map(friend => db.ref(`users/${friend}`).once("value")))
         });
@@ -67,7 +67,7 @@ class NotificationService {
                 const friend = friendRef.val();
                 if (friend) {
                     console.log(`Send notification to ${friend.notificationToken}`);
-                    completed.push(this._sendNotification(friend.notificationToken, estate, vote.yes, voteKey));
+                    completed.push(this._sendNotification(friend.notificationToken, estate, _.values(vote.yes), voteKey));
                 }
             }
 

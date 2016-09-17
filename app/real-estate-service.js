@@ -23,11 +23,11 @@ class RealEstateService {
                 sellingPrice: realEstate.sellingPrice
             };
 
-            for (const yesVote of (vote.yes || [])) {
+            for (const yesVote of _.values(vote.yes)) {
                 this.realEstateOracle.train(yesVote, Object.assign({ match: true }, decision));
             }
 
-            for (const noVote of (vote.no || [])) {
+            for (const noVote of _.values(vote.no)) {
                 this.realEstateOracle.train(noVote, Object.assign({ match: false }, decision));
             }
         });
