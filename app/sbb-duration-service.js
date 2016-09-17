@@ -1,6 +1,3 @@
-/**
- * Created by longstone on 17/09/16.
- */
 const rp = require('request-promise');
 const _ = require('lodash');
 const moment = require('moment');
@@ -20,7 +17,8 @@ module.exports = function (from, to) {
     return rp(conf).then(
         function (result) {
             return _.mean(result.connections.map(function (value) {
-                return moment(value.duration.replace('00d', ''), 'HH:mm:ss').subtract(moment()).minutes();
+                const cleanedDuration = value.duration.replace('00d', '') ;
+                return moment(cleanedDuration, 'HH:mm:ss').minutes();
             }));
         });
 };
