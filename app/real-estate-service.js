@@ -1,6 +1,7 @@
 const _ = require("lodash");
 
 const HomeGateClient = require("./homegate-client");
+const RealEstateOracle = require("./real-estate-oracle");
 const sbbService = require("./sbb-duration-service");
 
 /**
@@ -10,6 +11,19 @@ class RealEstateService {
 
     constructor() {
         this.homegateClient = new HomeGateClient();
+        this.realEstateOracle = new RealEstateOracle();
+    }
+
+    onVoteAdded(snapshot) {
+        const vote = snapshot.val();
+
+        const realEstate = this.getRealEstate(vote.advertisementId).then(realEstate => {
+            this.realEstateOracle.train(vote.uid, {
+                numberRooms: realEstate.numberRooms,
+                sellingPrice: realEstate.sellingPrice,
+                match: vote.value > 0
+            });
+        });
     }
 
     /**
@@ -22,16 +36,27 @@ class RealEstateService {
     }
 
     /**
+     * Trains the real estate service with more input
+     * @param userId {String} the id of the user
+     * @param results {IRealEstateTrainingRecord[]}
+     * @returns {Promise} that resolves when the training is complete
+     */
+    train(userId, results) {
+        return this.realEstateOracle.giveFeedback(userId, results);
+    }
+
+    /**
      * Searches for the real estates near to the given coordinate
      * @param coordinate the coordinate
-     * @param {String[]} places the places for which the travel time between to the estate should be calculated
-     * @param {number} page the page number to fetch
-     * @param {number} limit the number of elements to show per page
+     * @param uid {String} user id
+     * @param {String[]} [places] the places for which the travel time between to the estate should be calculated
+     * @param {number} [page] the page number to fetch
+     * @param {number} [limit] the number of elements to show per page
      * @returns {Promise} a promise that is resolved with the real estates near to the given coordinate
      */
-    getRealEstatesNearBy(coordinate, places, page=0, limit=5) {
-        return this.homegateClient.fetchRealEstatesNearBy(coordinate, page, limit).then(result => {
-            let pagingInformation = _.pick(result, "resultCount", "start", "page", "pageCount", "itemsPerPage", "hasNextPage", "hasPreviousPage");
+    getRealEstatesNearBy(coordinate, uid, { places=[], page=0, limit=5 }) {
+        return this._fetchSuggestedRealEstates(coordinate, uid, page, limit).then(result=> {
+            let pagingInformation = _.pick(result, "page", "itemsPerPage");
             const travelTimesResolved = Promise.all(result.items.map(estate => this._annotateRealEstate(estate, places)));
 
             return travelTimesResolved.then(items => (
@@ -42,6 +67,22 @@ class RealEstateService {
         });
     }
 
+    _fetchSuggestedRealEstates(coordinate, uid, page, limit, results=[]) {
+        return this.homegateClient.fetchRealEstatesNearBy(coordinate, page, limit * 4)
+            .then(result => this.realEstateOracle.filter(uid, result.items))
+            .then(filtered => {
+                results.push.apply(results, filtered);
+                if (results.length < limit) {
+                    return this._fetchSuggestedRealEstates(coordinate, uid, page + 1, limit, results);
+                }
+                return {
+                    page,
+                    itemsPerPage: limit,
+                    items: _.take(results, limit)
+                };
+            });
+    }
+
     /**
      * Adds additional fields to the real estate and removes unused ones
      * @param estate the estate to annotate
@@ -50,7 +91,7 @@ class RealEstateService {
      * @private
      */
     _annotateRealEstate(estate, places) {
-        estate = _.pick(estate, "title", "street", "city", "sellingPrice", "pictures", "description", "advertisementId");
+        estate = _.pick(estate, "title", "street", "city", "sellingPrice", "pictures", "description", "advertisementId", "numberRooms");
         const travelTimesResolved = places.map(place => this._getTravelTimeBetween(estate, place));
         return Promise.all(travelTimesResolved).then((travelTimes) => {
             estate.travelTimes = estate.travelTimes = travelTimes;
