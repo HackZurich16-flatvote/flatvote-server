@@ -63,18 +63,6 @@ module.exports = function (realEstateService) {
         realEstateService.getRealEstate(req.params.id).then(estate => res.send(estate));
     });
 
-    /**
-     * Trains the service with the given data
-     * @param {String} uid the id of the user for which the real estate service is to train
-     */
-    app.post("/realEstates/:uid/train", function (req, res) {
-        if (!req.params.uid) {
-            return res.sendStatus(400);
-        }
-
-        realEstateService.train(req.params.uid, req.body).then(() => res.sendStatus(200));
-    });
-
     app.listen(app.get('port'), function () {
         console.log('Node app is running on port', app.get('port'));
     });

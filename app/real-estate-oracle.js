@@ -16,17 +16,19 @@ class RetrainableNeuralNetwork {
 
     train(trainingData) {
         this.trainingData = this.trainingData.concat(trainingData);
-        this.network.train(this.trainingData);
+        // do not train until we have at least some data, otherwise all other input is excluded
+        if (this.trainingData.length >= 4) {
+            this.network.train(this.trainingData);
+        }
     }
 }
 
 /**
  * @typedef {Object} IRealEstateTrainingRecord
- * @param price {number} the price of the estate
- * @param rooms {number} the number of rooms
+ * @param sellingPrice {number} the price of the estate
+ * @param numberRooms {number} the number of rooms
  * @param match {boolean} is this estate a match for the user or not?
  */
-
 class RealEstateOracle {
 
     constructor() {
@@ -36,37 +38,32 @@ class RealEstateOracle {
     /**
      * Trains the neural network for the given user
      * @param uid the id of the user for which the neural network is to be trained
-     * @param records {IRealEstateTrainingRecord[]} the records to train
+     * @param decision {IRealEstateTrainingRecord} the decision to train
      */
-    giveFeedback(uid, records) {
-        let networkResolved = this._getNetwork(uid).then(network => network || new RetrainableNeuralNetwork());
+    train(uid, decision) {
+        console.log(`Train oracle for ${uid} with new decision ${decision.numberRooms}, ${decision.sellingPrice}, ${decision.match}`);
+        const network = this._getNetwork(uid) || new RetrainableNeuralNetwork();
 
-        return networkResolved.then((network) => {
-            const inputs = records.map(record => this._estateToInput(record));
-            const outputs = records.map(record => ([record.match ? 1.0 : 0.0 ]));
-
-            const trainData = _.zipWith(inputs, outputs, (input, output) => ({input, output}));
-
-            network.train(trainData);
-            return this._saveNetwork(uid, network);
-        });
+        const input = this._estateToInput(decision);
+        const output = [ decision.match ? 1.0 : 0.0 ];
+        network.train([ { input, output } ]);
+        return this._saveNetwork(uid, network);
     }
 
     filter(uid, realEstates) {
-        return this._getNetwork(uid).then(network => {
-            if (!network) {
-                return realEstates;
-            }
+        const network = this._getNetwork(uid);
+        if (!network) {
+            return realEstates;
+        }
 
-            return realEstates.filter(realEstate => {
-                const result = network.run(this._estateToInput(realEstate));
-                return Math.round(result[0]) === 1;
-            });
+        return realEstates.filter(realEstate => {
+            const result = network.run(this._estateToInput(realEstate));
+            return Math.round(result[0]) === 1;
         });
     }
 
     _estateToInput(estate) {
-        return { price: estate.price / 10000, rooms: estate.numberRooms / 10};
+        return { price: estate.sellingPrice / 10000, rooms: estate.numberRooms / 10};
     }
 
     /**
@@ -76,7 +73,7 @@ class RealEstateOracle {
      * @private
      */
     _getNetwork(uid) {
-        return Promise.resolve(this.networks[`@${uid}`]);
+        return this.networks[`@${uid}`];
     }
 
     _saveNetwork(uid, network) {

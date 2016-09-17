@@ -1,8 +1,6 @@
 var request = require("request-promise");
 var process = require("process");
-const db = require("./database");
 
-const ACCESS_KEY = process.env.FIREBASE_NOTIFICATION_ACCESS_KEY;
 
 /**
  * The notification server notifies the friends of a user about liked estates
@@ -17,13 +15,7 @@ class NotificationService {
         this.realEstateService = realEstateService;
     }
 
-    start() {
-        db.ref("votes").on("child_added", this.voteAdded, function (error) {
-            console.error(`Failed to retrieve votes out of reason`, error);
-        }, this);
-    }
-
-    voteAdded(snapshot) {
+    sendNotifications(snapshot) {
         const vote = snapshot.val();
 
         if (vote.notified) {
@@ -92,10 +84,6 @@ class NotificationService {
                 console.error(`Failed to notify device with id ${notificationToken} for reason '${response.results[0].error}'`);
             }
         });
-    }
-
-    stop() {
-        db.ref("votes").off("child_added", this.voteAdded, this);
     }
 }
 

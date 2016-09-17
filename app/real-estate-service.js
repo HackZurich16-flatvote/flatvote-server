@@ -14,6 +14,18 @@ class RealEstateService {
         this.realEstateOracle = new RealEstateOracle();
     }
 
+    onVoteAdded(snapshot) {
+        const vote = snapshot.val();
+
+        const realEstate = this.getRealEstate(vote.advertisementId).then(realEstate => {
+            this.realEstateOracle.train(vote.uid, {
+                numberRooms: realEstate.numberRooms,
+                sellingPrice: realEstate.sellingPrice,
+                match: vote.value > 0
+            });
+        });
+    }
+
     /**
      * Fetches the real estate with the given id
      * @param advertisementId the id of the advertisement
