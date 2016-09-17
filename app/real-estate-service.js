@@ -13,6 +13,15 @@ class RealEstateService {
     }
 
     /**
+     * Fetches the real estate with the given id
+     * @param advertisementId the id of the advertisement
+     * @returns {Promise} the loaded real estate
+     */
+    getRealEstate(advertisementId) {
+        return this.homegateClient.getRealEstate(advertisementId);
+    }
+
+    /**
      * Searches for the real estates near to the given coordinate
      * @param coordinate the coordinate
      * @param {{ name: String, address: String }} places the places for which the travel time between to the estate should be calculated
