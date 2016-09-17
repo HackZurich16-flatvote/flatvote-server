@@ -25,13 +25,19 @@ app.get("/distance", function (req, res) {
   
 });
 
+/**
+ * Returns the real estates near to the passed coordinate.
+ * The coordinate is passed as latitude and longitude URL-Parameters.
+ * The call accepts the optional URL-Parameter page.
+ */
 app.get("/realEstates", function (req, res) {
     if (!req.query.latitude || !req.query.longitude) {
         res.sendStatus(400);
     }
 
     const coordinate = { latitude: req.query.latitude, longitude: req.query.longitude };
-    realEstateService.getRealEstatesNearBy(coordinate, 0).then(results => res.send(results));
+    realEstateService.getRealEstatesNearBy(coordinate, req.query.page)
+        .then(results => res.send(results));
 });
 
 app.listen(app.get('port'), function () {
