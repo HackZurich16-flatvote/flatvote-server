@@ -13,6 +13,24 @@ class HomeGateClient {
     }
 
     /**
+     * Fetches the real estate with the given id
+     * @param advertisementId the id of the advertisement
+     * @returns {Promise} the loaded real estate
+     */
+    getRealEstate(advertisementId) {
+        const options = {
+            uri: `https://api.tamedia.cloud/homegate/v1/rs/real-estates/${encodeURIComponent(advertisementId)}`,
+            json: true,
+            headers: {
+                APIKEY: this.accessToken,
+                contentType: "application/json"
+            }
+        };
+
+        return rp.get(options);
+    }
+
+    /**
      * Returns a list with the real estates near to the given location
      * @param coordinate the coordination
      * @param page the page number to fetch
@@ -21,16 +39,16 @@ class HomeGateClient {
      * @see https://tamedia.gelato.io/docs/apis/homegate-real-estate-api/versions/1.0/resources/search
      */
     fetchRealEstatesNearBy(coordinate, page, limit) {
-        const args = {
-            headers: {
-                contentType: "application/json",
-                APIKEY: this.accessToken
-            }
-        };
-
-        const encodedCoordinates = encodeURIComponent(`${coordinate.latitude},${coordinate.longitude}`);
         const options = {
-            uri: `https://api.tamedia.cloud/homegate/v1/rs/real-estates?lan=de&cht=rentflat&${page + 1}&nrs=${limit}&nby=${encodedCoordinates}&wdi=10`,
+            uri: `https://api.tamedia.cloud/homegate/v1/rs/real-estates`,
+            qs: {
+                lan: "de",
+                cht: "rentflat",
+                pag: page + 1,
+                nrs: limit,
+                nby: `${coordinate.latitude},${coordinate.longitude}`,
+                wdi: 10
+            },
             json: true,
             headers: {
                 APIKEY: this.accessToken,
