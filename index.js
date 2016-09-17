@@ -1,7 +1,11 @@
 var express = require("express");
 var process = require("process");
-var bodyParser = require("body-parser");
+const _ = require('lodash');
+
+const moment = require('moment');
+const bodyParser = require("body-parser");
 const RealEstateService = require("./app/real-estate-service");
+const sbbDuration = require('./app/sbb-duration-service');
 
 const realEstateService = new RealEstateService();
 
@@ -15,6 +19,12 @@ app.get("/", function (req, res) {
     res.send("Hello World");
 });
 
+app.get("/distance", function (req, res) {
+    sbbDuration(_.get(req, 'query.from'),_.get(req, 'query.to'))
+        .then( function(sec){ res.json({avgTimeinMinutes: sec});})
+  
+});
+
 app.get("/realEstates", function (req, res) {
     if (!req.query.latitude || !req.query.longitude) {
         res.sendStatus(400);
@@ -24,6 +34,6 @@ app.get("/realEstates", function (req, res) {
     realEstateService.getRealEstatesNearBy(coordinate, 0).then(results => res.send(results));
 });
 
-app.listen(app.get('port'), function() {
+app.listen(app.get('port'), function () {
     console.log('Node app is running on port', app.get('port'));
 });
