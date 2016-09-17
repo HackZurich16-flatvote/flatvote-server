@@ -1,6 +1,7 @@
 var rp = require('request-promise');
+const process = require("process");
 
-const DEFAULT_ACCESS_TOKEN = "24cd4c54e7704f92a8ae7b71d4e98786";
+const DEFAULT_ACCESS_TOKEN = process.env.HOME_GATE_ACCESS_TOKEN;
 
 /**
  * Client that access the Home Gate endpoint to fetch real estate information.
