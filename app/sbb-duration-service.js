@@ -21,7 +21,6 @@ module.exports = function (from, to) {
         function (result) {
             return _.mean(result.connections.map(function (value) {
                 return moment(value.duration.replace('00d', ''), 'HH:mm:ss').subtract(moment()).minutes();
-                ;
             }));
 
 
