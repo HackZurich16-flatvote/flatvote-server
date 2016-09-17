@@ -12,7 +12,7 @@ function queryParametersToPlaces(queryParameters) {
         }
         return[ queryParameters.place ];
     }
-    return [];
+    return [].filter(place => _.toString(place).trim().length > 0);
 }
 
 module.exports = function (realEstateService) {
@@ -40,6 +40,7 @@ module.exports = function (realEstateService) {
         }
 
         const places = queryParametersToPlaces(req.query);
+        console.log(places);
 
         realEstateService.getRealEstate(req.params.id, places).then(estate => res.send(estate));
     });
