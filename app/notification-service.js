@@ -1,5 +1,9 @@
 var request = require("request-promise");
 var process = require("process");
+var _ = require("lodash");
+var db = require("./database");
+
+const ACCESS_KEY = process.env.FIREBASE_NOTIFICATION_ACCESS_KEY;
 
 
 /**
@@ -18,32 +22,43 @@ class NotificationService {
     sendNotifications(snapshot) {
         const vote = snapshot.val();
 
-        if (vote.notified) {
+        const numberOfVotes = (vote.yes || []).length + (vote.no || []).length;
+        if (numberOfVotes >= vote.votesRequired) {
             return;
         }
 
         return this.realEstateService.getRealEstate(vote.advertisementId)
-            .then(realEstate => this._notifyFriends(vote, realEstate))
-            .then(() => {
-                snapshot.ref.update({
-                    notified: true
-                });
-            })
+            .then(realEstate => this._notifyFriends(snapshot, realEstate, snapshot.key))
             .catch(function (error) {
                 console.error("Failed to send notifications out of reason", error);
             });
     };
 
-    _notifyFriends(vote, estate) {
+    _notifyFriends(snapshot, estate, voteKey) {
+        const vote = snapshot.val();
         if (!estate) {
             console.warn(`Suppress notification for ${vote.advertisementId} as the real estate seems to be no longer available`);
             return;
         }
 
-        const friendIdRefs = db.ref(`friends/${vote.uid}`).once("value");
+        if (!vote.yes || vote.yes.length === 0) {
+            // was a no vote of a user, just for training
+            return;
+        }
+
+        const friendIdRefs = db.ref(`friends/${vote.yes[0]}`).once("value");
         const friends = friendIdRefs.then(idsRef => {
             const ids = idsRef.val() ? idsRef.val() : [];
-            return Promise.all(ids.map(friend => db.ref(`users/${friend}`).once("value")))
+
+            if (!vote.votesRequired) {
+                snapshot.ref.update({
+                    votesRequired: ids.length + 1
+                });
+            }
+
+            const responders = (vote.yes || []).concat((vote.no || []));
+            const pendingIds = _.without(ids, responders);
+            return Promise.all(pendingIds.map(friend => db.ref(`users/${friend}`).once("value")))
         });
 
         return friends.then(friendRefs => {
@@ -52,15 +67,16 @@ class NotificationService {
                 const friend = friendRef.val();
                 if (friend) {
                     console.log(`Send notification to ${friend.notificationToken}`);
-                    completed.push(this._sendNotification(friend.notificationToken, estate, vote.uid));
+                    completed.push(this._sendNotification(friend.notificationToken, estate, vote.yes, voteKey));
                 }
             }
 
-            return Promise.all(completed);
+            return Promise.all(completed).then(() => completed.length);
         });
     }
 
-    _sendNotification(notificationToken, estate, userName) {
+    _sendNotification(notificationToken, estate, uids, voteKey) {
+        const usernames = _.join(uids, ", ");
         return request.post({
             uri: "https://fcm.googleapis.com/fcm/send",
             json: true,
@@ -71,11 +87,11 @@ class NotificationService {
             body: {
                 notification: {
                     title: estate.title,
-                    text: `The following flat looks promising to ${userName}, what do you think?`
+                    text: `The following flat looks promising to ${usernames}, what do you think?`
                 },
                 data: {
                     advertisementId: estate.advertisementId,
-                    friendName: userName
+                    voteKey
                 },
                 to: notificationToken
             }

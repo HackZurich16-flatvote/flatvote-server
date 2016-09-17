@@ -1,7 +1,5 @@
 const db = require("./database");
 
-const ACCESS_KEY = process.env.FIREBASE_NOTIFICATION_ACCESS_KEY;
-
 class VoteListener {
 
     constructor() {

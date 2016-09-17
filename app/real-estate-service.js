@@ -18,11 +18,18 @@ class RealEstateService {
         const vote = snapshot.val();
 
         const realEstate = this.getRealEstate(vote.advertisementId).then(realEstate => {
-            this.realEstateOracle.train(vote.uid, {
+            const decision = {
                 numberRooms: realEstate.numberRooms,
-                sellingPrice: realEstate.sellingPrice,
-                match: vote.value > 0
-            });
+                sellingPrice: realEstate.sellingPrice
+            };
+
+            for (const yesVote of (vote.yes || [])) {
+                this.realEstateOracle.train(yesVote, Object.assign({ match: true }, decision));
+            }
+
+            for (const noVote of (vote.no || [])) {
+                this.realEstateOracle.train(noVote, Object.assign({ match: false }, decision));
+            }
         });
     }
 
@@ -31,8 +38,9 @@ class RealEstateService {
      * @param advertisementId the id of the advertisement
      * @returns {Promise} the loaded real estate
      */
-    getRealEstate(advertisementId) {
-        return this.homegateClient.getRealEstate(advertisementId);
+    getRealEstate(advertisementId, places=[]) {
+        return this.homegateClient.getRealEstate(advertisementId)
+            .then(estate => this._annotateRealEstate(estate, places));
     }
 
     /**
