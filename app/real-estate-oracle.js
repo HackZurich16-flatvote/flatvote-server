@@ -2,6 +2,25 @@ const brain = require("brain");
 const _ = require("lodash");
 
 /**
+ * Network that automatically retrains itself if new data is available
+ */
+class RetrainableNeuralNetwork {
+    constructor() {
+        this.trainingData = [];
+        this.network = new brain.NeuralNetwork();
+    }
+
+    run() {
+        return this.network.run.apply(this.network, arguments);
+    }
+
+    train(trainingData) {
+        this.trainingData = this.trainingData.concat(trainingData);
+        this.network.train(this.trainingData);
+    }
+}
+
+/**
  * @typedef {Object} IRealEstateTrainingRecord
  * @param price {number} the price of the estate
  * @param rooms {number} the number of rooms
@@ -20,14 +39,13 @@ class RealEstateOracle {
      * @param records {IRealEstateTrainingRecord[]} the records to train
      */
     giveFeedback(uid, records) {
-        let networkResolved = this._getNetwork(uid).then(network => network || new brain.NeuralNetwork());
+        let networkResolved = this._getNetwork(uid).then(network => network || new RetrainableNeuralNetwork());
 
         return networkResolved.then((network) => {
-            const inputs = records.map(record => _.omit(record, "match", "rooms"));
-            const outputs = records.map(record => ({ match: record.match ? 1.0 : 0.0 }));
+            const inputs = records.map(record => this._estateToInput(record));
+            const outputs = records.map(record => ([record.match ? 1.0 : 0.0 ]));
 
             const trainData = _.zipWith(inputs, outputs, (input, output) => ({input, output}));
-            console.log(trainData);
 
             network.train(trainData);
             return this._saveNetwork(uid, network);
@@ -41,12 +59,14 @@ class RealEstateOracle {
             }
 
             return realEstates.filter(realEstate => {
-                const input = _.pick(realEstate, "price");
-                const result = network.run(input);
-                console.log(input, result);
+                const result = network.run(this._estateToInput(realEstate));
                 return Math.round(result[0]) === 1;
             });
         });
+    }
+
+    _estateToInput(estate) {
+        return { price: estate.price / 10000, rooms: estate.numberRooms / 10};
     }
 
     /**
@@ -64,37 +84,4 @@ class RealEstateOracle {
     }
 }
 
-const test = new RealEstateOracle();
-test.giveFeedback("micha@famreiser.ch", [{
-    price: 1800,
-    rooms: 3,
-    match: true
-},{
-    price: 2000,
-    rooms: 4.5,
-    match: true
-}, {
-    price: 3000,
-    rooms: 4.5,
-    match: false
-}, {
-    price: 2500,
-    rooms: 4,
-    match: true
-}, {
-    price: 3000,
-    rooms: 4,
-    match: false
-}]).then(() => {
-    test.filter("micha@famreiser.ch", [{
-        price: 500,
-        rooms: 4.5
-    },{
-        price: 2000,
-        rooms: 4.5
-    }, {
-        price: 10000,
-        rooms: 4.5
-    }]).then(matches => console.log(matches));
-});
-
+module.exports = RealEstateOracle;
