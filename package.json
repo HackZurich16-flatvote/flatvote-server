@@ -7,6 +7,9 @@
     "start": "node index.js",
     "watch": "nodemon index.js"
   },
+  "engines": {
+    "node": "6.x.x"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HackZurich16-flatvote/flatvote-server.git"
