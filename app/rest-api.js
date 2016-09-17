@@ -26,7 +26,20 @@ module.exports = function (realEstateService) {
     app.get("/distance", function (req, res) {
         sbbDuration(_.get(req, 'query.from'),_.get(req, 'query.to'))
             .then( function(sec){ res.json({avgTimeinMinutes: sec});})
+    });
 
+
+    /**
+     * Returns the real estate with the given id
+     * @param :id the id of the real estate to fetch
+     * @returns the fetched real estate
+     */
+    app.get("/realEstates/:id(\\d+)", function (req, res) {
+        if (!req.params.id) {
+            return res.sendStatus(400);
+        }
+
+        realEstateService.getRealEstate(req.params.id).then(estate => res.send(estate));
     });
 
     /**
@@ -48,19 +61,6 @@ module.exports = function (realEstateService) {
         const coordinate = { latitude: req.query.latitude, longitude: req.query.longitude };
         realEstateService.getRealEstatesNearBy(coordinate, req.params.uid, { places, page: req.query.page })
             .then(results => res.send(results));
-    });
-
-    /**
-     * Returns the real estate with the given id
-     * @param :id the id of the real estate to fetch
-     * @returns the fetched real estate
-     */
-    app.get("/realEstates/:id", function (req, res) {
-        if (!req.params.id) {
-            return res.sendStatus(400);
-        }
-
-        realEstateService.getRealEstate(req.params.id).then(estate => res.send(estate));
     });
 
     app.listen(app.get('port'), function () {
