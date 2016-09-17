@@ -18,7 +18,7 @@ module.exports = function (from, to) {
         function (result) {
             return _.mean(result.connections.map(function (value) {
                 const cleanedDuration = value.duration.replace('00d', '') ;
-                return moment(cleanedDuration, 'HH:mm:ss').minutes();
+                return moment.duration(cleanedDuration, 'HH:mm:ss').asMinutes();
             }));
         });
 };

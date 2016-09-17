@@ -26,7 +26,7 @@ class NotificationService {
     voteAdded(snapshot) {
         const vote = snapshot.val();
 
-        if (vote.invited) {
+        if (vote.notified) {
             return;
         }
 
@@ -54,20 +54,20 @@ class NotificationService {
             for (const friendRef of friendRefs) {
                 const friend = friendRef.val();
                 if (friend) {
-                    console.log(`Send notification to ${friend.notificationId}`);
-                    completed.push(this._sendNotification(friend.notificationId, estate, vote.uid));
+                    console.log(`Send notification to ${friend.notificationToken}`);
+                    completed.push(this._sendNotification(friend.notificationToken, estate, vote.uid));
                 }
             }
 
             return Promise.all(completed).then(() => {
                 // snapshot.update({
-                //    invited: true
+                //    notified: true
                 //});
             });
         });
     }
 
-    _sendNotification(notificationId, estate, userName) {
+    _sendNotification(notificationToken, estate, userName) {
         return request.post({
             uri: "https://fcm.googleapis.com/fcm/send",
             json: true,
@@ -84,11 +84,11 @@ class NotificationService {
                     advertisementId: estate.advertisementId,
                     friendName: userName
                 },
-                to : notificationId
+                to: notificationToken
             }
         }).then(response => {
             if (response.failure > 0) {
-                console.error(`Failed to notify device with id ${notificationId} for reason '${response.results[0].error}'`);
+                console.error(`Failed to notify device with id ${notificationToken} for reason '${response.results[0].error}'`);
             }
         });
     }

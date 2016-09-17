@@ -6,25 +6,13 @@ const bodyParser = require("body-parser");
 const sbbDuration = require('./sbb-duration-service');
 
 function queryParametersToPlaces(queryParameters) {
-    let placeAddresses = [];
     if (queryParameters.place) {
         if (_.isArray(queryParameters.place)) {
-            placeAddresses = queryParameters.place;
-        } else {
-            placeAddresses = [ queryParameters.place ];
+            return queryParameters.place;
         }
+        return[ queryParameters.place ];
     }
-
-    let placeNames = [];
-    if (queryParameters.placeName) {
-        if (_.isArray(queryParameters.placeName)) {
-            placeNames = queryParameters.placeName;
-        } else {
-            placeNames = [ queryParameters.placeName ]
-        }
-    }
-
-    return _.zip(placeAddresses, placeNames).map(([address, name]) => ({ name, address }));
+    return [];
 }
 
 module.exports = function (realEstateService) {
@@ -46,7 +34,6 @@ module.exports = function (realEstateService) {
      * @param req.query.longitude {number} the longitude of the coordinate for which nearby flats are searched
      * @param req.query.latitude {number} the latitude of the coordinate for which nearby flats are searched
      * @param req.query.place {string | string[]} address of a place for which the public transport travel time should be calculated to the found estates
-     * @param req.query.placeName {string | string[]} name of a place for which the public transport travel time should be calculated to the found estates
      * @param [req.query.page=0] {number} the page number to fetch (starting with 0)
      * @returns the found real estates
      */
