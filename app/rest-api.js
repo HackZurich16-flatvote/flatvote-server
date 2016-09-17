@@ -39,7 +39,9 @@ module.exports = function (realEstateService) {
             return res.sendStatus(400);
         }
 
-        realEstateService.getRealEstate(req.params.id).then(estate => res.send(estate));
+        const places = queryParametersToPlaces(req.query);
+
+        realEstateService.getRealEstate(req.params.id, places).then(estate => res.send(estate));
     });
 
     /**

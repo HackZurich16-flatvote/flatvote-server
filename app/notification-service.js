@@ -1,5 +1,8 @@
 var request = require("request-promise");
 var process = require("process");
+var db = require("./database");
+
+const ACCESS_KEY = process.env.FIREBASE_NOTIFICATION_ACCESS_KEY;
 
 
 /**

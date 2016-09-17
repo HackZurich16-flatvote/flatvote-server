@@ -31,8 +31,9 @@ class RealEstateService {
      * @param advertisementId the id of the advertisement
      * @returns {Promise} the loaded real estate
      */
-    getRealEstate(advertisementId) {
-        return this.homegateClient.getRealEstate(advertisementId);
+    getRealEstate(advertisementId, places=[]) {
+        return this.homegateClient.getRealEstate(advertisementId)
+            .then(estate => this._annotateRealEstate(estate, places));
     }
 
     /**
