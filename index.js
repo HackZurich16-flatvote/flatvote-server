@@ -6,6 +6,8 @@ const moment = require('moment');
 const bodyParser = require("body-parser");
 const RealEstateService = require("./app/real-estate-service");
 const sbbDuration = require('./app/sbb-duration-service');
+const doodle = require('./app/doodle-client');
+
 
 const realEstateService = new RealEstateService();
 
@@ -16,11 +18,22 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.set('port', (process.env.PORT || 5000));
 
 app.get("/distance", function (req, res) {
-    sbbDuration(_.get(req, 'query.from'),_.get(req, 'query.to'))
-        .then( function(sec){ res.json({avgTimeinMinutes: sec});})
-  
+    sbbDuration(_.get(req, 'query.from'), _.get(req, 'query.to'))
+        .then(function (sec) {
+            res.json({avgTimeinMinutes: sec});
+        })
+
 });
 
+app.get('/createPoll', function (req, res) {
+    doodle.createPoll({
+        title: _.get(req, 'query.title'),
+        name: _.get(req, 'query.name'),
+        email: _.get(req, 'query.email'),
+        description: _.get(req, 'query.description'),
+        message: _.get(req, 'query.message')
+    })
+});
 /**
  * Returns the real estates near to the passed coordinate.
  * @param req.query.longitude {number} the longitude of the coordinate for which nearby flats are searched
