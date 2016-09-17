@@ -32,6 +32,11 @@ class NotificationService {
 
         return this.realEstateService.getRealEstate(vote.advertisementId)
             .then(realEstate => this._notifyFriends(vote, realEstate))
+            .then(() => {
+                snapshot.ref.update({
+                    notified: true
+                });
+            })
             .catch(function (error) {
                 console.error("Failed to send notifications out of reason", error);
             });
@@ -59,11 +64,7 @@ class NotificationService {
                 }
             }
 
-            return Promise.all(completed).then(() => {
-                snapshot.update({
-                    notified: true
-                });
-            });
+            return Promise.all(completed);
         });
     }
 
