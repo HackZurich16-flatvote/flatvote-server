@@ -19,6 +19,12 @@ class NotificationService {
         this.realEstateService = realEstateService;
     }
 
+    sendNotificationOnChange(snapshot) {
+        if (snapshot.val().update) {
+            this.sendNotifications(snapshot);
+        }
+    }
+
     sendNotifications(snapshot) {
         const vote = snapshot.val();
 

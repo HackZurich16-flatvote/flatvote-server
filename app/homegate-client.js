@@ -27,7 +27,14 @@ class HomeGateClient {
             }
         };
 
-        return rp.get(options);
+        return rp.get(options).then(estate => {
+            estate.description = estate.adDescription;
+            estate.pictures = estate.realEstatePictures;
+
+            delete estate.adDescription;
+            delete estate.realEstatePictures;
+            return estate;
+        });
     }
 
     /**
