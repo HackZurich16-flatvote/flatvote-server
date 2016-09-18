@@ -29,7 +29,7 @@ class HomeGateClient {
 
         return rp.get(options).then(estate => {
             estate.description = estate.adDescription;
-            estate.pictures = estate.realEstatePictures;
+            estate.pictures = estate.realEstatePictures.map(pic => pic.url);
 
             delete estate.adDescription;
             delete estate.realEstatePictures;
