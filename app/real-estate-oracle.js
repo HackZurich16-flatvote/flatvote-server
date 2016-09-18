@@ -11,7 +11,10 @@ class RetrainableNeuralNetwork {
     }
 
     run() {
-        return this.network.run.apply(this.network, arguments);
+        if (this.trainingData.length >= 4) {
+            return this.network.run.apply(this.network, arguments);
+        }
+        return [1];
     }
 
     train(trainingData) {
