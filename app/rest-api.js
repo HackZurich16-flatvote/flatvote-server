@@ -40,7 +40,6 @@ module.exports = function (realEstateService) {
         }
 
         const places = queryParametersToPlaces(req.query);
-        console.log(places);
 
         realEstateService.getRealEstate(req.params.id, places).then(estate => res.send(estate));
     });
