@@ -13,6 +13,6 @@ const notificationService = new NotificationService(realEstateService);
 const voteListener = new VoteListener();
 
 voteListener.registerListener(notificationService.sendNotifications, notificationService);
-voteListener.registerChangeListener(notificationService.sendNotificationOnChange, notificationService);
+voteListener.registerChangeListener(notificationService.sendNotifications, notificationService);
 voteListener.registerListener(realEstateService.onVoteAdded, realEstateService);
 voteListener.start();

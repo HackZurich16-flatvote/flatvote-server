@@ -19,12 +19,6 @@ class NotificationService {
         this.realEstateService = realEstateService;
     }
 
-    sendNotificationOnChange(snapshot) {
-        if (snapshot.val().update) {
-            this.sendNotifications(snapshot);
-        }
-    }
-
     sendNotifications(snapshot) {
         const vote = snapshot.val();
 
@@ -56,13 +50,6 @@ class NotificationService {
         const friendIdRefs = db.ref(`friends/${responders[0]}`).once("value");
         const friends = friendIdRefs.then(idsRef => {
             const ids = idsRef.val() ? idsRef.val() : [];
-
-            if (!vote.votesRequired) {
-                snapshot.ref.update({
-                    votesRequired: ids.length + 1
-                });
-            }
-
             const pendingIds = _.without(ids, responders);
             return Promise.all(pendingIds.map(friend => db.ref(`users/${friend}`).once("value")))
         });
