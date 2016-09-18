@@ -58,7 +58,7 @@ class RealEstateOracle {
 
         return realEstates.filter(realEstate => {
             const result = network.run(this._estateToInput(realEstate));
-            console.log({ price: estate.sellingPrice, rooms: estate.numberRooms}, result);
+            console.log({ price: realEstate.sellingPrice, rooms: realEstate.numberRooms}, result);
             return Math.round(result[0]) === 1;
         });
     }
@@ -74,11 +74,15 @@ class RealEstateOracle {
      * @private
      */
     _getNetwork(uid) {
-        return this.networks[`@${uid}`];
+        return this.networks[this._getNetworkKey(uid)];
     }
 
     _saveNetwork(uid, network) {
-        this.networks[`@${uid}`] = network;
+        this.networks[this._getNetworkKey(uid)] = network;
+    }
+
+    _getNetworkKey(uid) {
+        return `@${uid.replace(".", ",")}`;
     }
 }
 
