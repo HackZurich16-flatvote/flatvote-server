@@ -58,6 +58,7 @@ class RealEstateOracle {
 
         return realEstates.filter(realEstate => {
             const result = network.run(this._estateToInput(realEstate));
+            console.log({ price: estate.sellingPrice, rooms: estate.numberRooms}, result);
             return Math.round(result[0]) === 1;
         });
     }
